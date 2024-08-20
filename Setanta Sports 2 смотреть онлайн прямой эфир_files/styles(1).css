@@ -1,0 +1,47 @@
+@charset "utf-8";
+/* CSS Document */
+
+
+@media screen and (max-width: 979px){ 
+	
+div.aikonmenu ul.openmenu {
+    top: 60px;
+    left: 0 !important;
+	transition: all 0.3s ease;
+	-webkit-transition: all 0.3s ease;
+	-moz-transition: all 0.3s ease;
+	-ms-transition: all 0.3s ease;
+	-o-transition: all 0.3s ease;
+}
+    
+div.aikonmenu ul {
+    position: fixed !important;
+    width: 250px !important;
+    height: 100%;
+    right: auto !important;
+    left: -100% !important;
+    top: 60px;
+    background-color: #121316;
+	transition: all 0.3s ease;
+	-webkit-transition: all 0.3s ease;
+	-moz-transition: all 0.3s ease;
+	-ms-transition: all 0.3s ease;
+	-o-transition: all 0.3s ease;
+}
+    
+div.aikonmenu.respoborders ul li:last-child a,
+div.aikonmenu.respoborders ul li:last-child span{
+    border-bottom: solid 1px #16a085;
+}
+    
+body.moveit div.menu-darken {
+    opacity: 1;
+	transition: all 0.3s ease;
+	-webkit-transition: all 0.3s ease;
+	-moz-transition: all 0.3s ease;
+	-ms-transition: all 0.3s ease;
+	-o-transition: all 0.3s ease;
+}
+    
+}
+
