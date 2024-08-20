@@ -1,0 +1,8 @@
+@charset "utf-8";
+/* CSS Document */
+/* this css is not currently requiered for this animation to function, apart from the transition */
+
+div.aikonmenu {
+	position:absolute!important;
+}
+

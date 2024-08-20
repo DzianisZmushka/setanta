@@ -1,0 +1,130 @@
+jQuery.noConflict();
+var mfav = [];
+var page;
+var tfav = JSON.parse(localStorage.getItem('favchanel'));
+
+function newwin(link,licl) {
+console.log(link,licl);
+if (tfav != null ) {
+  var prevId = jQuery('.active').find('a').attr('href');
+  var newId=link.split('/').pop();
+  jQuery('.active').removeClass("active");
+  licl.classList.add("active");
+  jQuery(prevId).html("<!--" + jQuery(prevId).html() + "-->");
+   var targetHtml = jQuery(newId).html().trim();
+    if (targetHtml.indexOf('<!--') === 0) {
+      var step1 = targetHtml.substring(4);
+      var step2 = step1.substring(0, step1.length - 3);
+      jQuery(newId).html(step2);
+    }
+jQuery("td a[href]").each(function(){
+  var flink = jQuery(this).attr('href');
+		jQuery.each(tfav, function(index, value){
+			if (flink==value.match( /(?:\/)?\/.*\.html/ig ))
+      {
+      jQuery('[href="'+flink+'"]').next().addClass('stary');
+      }
+      	});
+		});
+		
+   }}
+   
+//   if (tfav != null && tfav != undefined && tfav.length < 1 ) {
+  if (tfav != null) {
+   jQuery("td a[href]").each(function(){
+    var flink = jQuery(this).attr('href');
+		jQuery.each(tfav, function(index, value){
+			if (flink==value.match( /(?:\/)?\/.*\.html/ig ))
+      {jQuery('[href="'+flink+'"]').next().addClass('stary');
+ }
+      	});
+			});
+   
+       var linkpage = '/' + jQuery(location).attr("href").split('/').pop();
+var imgsrc = jQuery('.category-desc img:first').attr('src');
+var title = jQuery('h1').text();
+var pl = '<td style="text-align: center;"><a href="' + linkpage + '" target="_blank"><img src="' + imgsrc + '" style="box-shadow: 2px 3px 3px 1px rgb(12, 12, 12); border-radius: 6px;" alt="' + title + '" title="' + title + '" width="150" height="100"></a></td>';
+  
+  jQuery.each(tfav, function(index, value) {
+    if (linkpage == value.match(/(?:\/)?\/.*\.html/ig)) {
+      jQuery('.star').addClass('stary');
+    }
+  });
+   }
+   
+
+if (page == 'fav') {
+  mfav = tfav;
+  var favtable = document.createElement('table');
+  favtable.className = 'favtable';
+  var vavtr;
+  jQuery.each(tfav, function(index, value) {
+    var favtd = document.createElement('td');
+    favtd.style.textAlign = "center";
+    favtd.style.position="relative";
+    favtd.style.padding="4px";
+    favtd.innerHTML = value;
+    if (index % 5 === 0) {
+      favtr = document.createElement('tr');
+    }
+    favtr.append(favtd);
+    if (index % 5 === 0) {
+      favtable.append(favtr);
+    }
+  });
+  jQuery('#favcontent').append(favtable);
+}
+
+jQuery('.tab-pane,.favtable,.category-desc  table:last').on("click", '.star', function() {
+ 
+  var fav = jQuery(this).attr('class').split(' ')[1];
+ if(tfav != null){mfav = tfav;}
+  if (mfav === null) {mfav=[];}
+  if (fav != 'stary' && page !== '') {
+    jQuery(this).addClass("stary");
+    var plink = jQuery(this).parent().get(0).outerHTML;
+    var pl = plink.replace(/\n/gi, '');
+    var pli = document.createElement('td');
+  
+    mfav.push(pl);
+  }
+  if (fav == 'stary' && page !== '') {
+    jQuery(this).removeClass("stary");
+    var pldel = jQuery(this).prev().attr('href');
+    var imfav = findPartial(mfav, pldel);
+    mfav.splice(imfav, 1);
+  }
+  var favdata = JSON.stringify(mfav);
+  localStorage.setItem("favchanel", favdata);
+});
+
+function clicksing(){
+	 mfav = tfav;
+  if (mfav === null) {mfav = [];}
+  var fav = jQuery('.star').attr('class').split(' ')[1];
+  if (fav != 'stary') {
+    var linkpage = '/' + jQuery(location).attr("href").split('/').pop();
+    var imgsrc = jQuery('.category-desc img:first').attr('src');
+    var title = jQuery('h1').text();
+    var pl = '<td style="text-align: center;"><a href="' + linkpage + '" target="_blank"><img src="' + imgsrc + '" style="box-shadow: 2px 3px 3px 1px rgb(12, 12, 12); border-radius: 6px;" alt="' + title + '" title="' + title + '" width="150" height="100"></a></td>';
+    var pli = document.createElement('td');
+    mfav.push(pl);
+    jQuery('.star').addClass('stary');
+  }
+
+  if (fav == 'stary') {
+    var linkpage = '/' + jQuery(location).attr("href").split('/').pop();
+    jQuery('.star').removeClass("stary");
+    var imfav = findPartial(mfav, linkpage);
+    mfav.splice(imfav, 1);
+  }
+  var favdata = JSON.stringify(mfav);
+  localStorage.setItem("favchanel", favdata);
+
+}
+
+function findPartial(r, s) {
+  for (var k = 0; k < r.length; ++k)
+    if (r[k].indexOf(s) >= 0)
+      return k;
+}

@@ -1,0 +1,331 @@
+/* aikonCMS */
+
+var aikonMenuGlobal;
+
+function AikonMenuManager () {
+    // variables
+    var that            = this,
+        options         = {
+            'desktopAnimation'          : 'basic',
+            'mobileAnimation'           : 'basic',
+            'containerPrefix'           : '.aikonmenu',
+            animationParams             : {},
+            mobileWidthStart            : 980,
+            darkenCloseOn               : ['sideslide'] // this tells which mobile animation should have the div.menu-darken close the menu
+        },
+        classes = {
+            desktopAnimationActive    : 'desktop-animation-active',
+            mobileAnimationActive     : 'mobile-animation-active',
+            bodyMenuActive            : 'moveit',
+            searchActive              : 'open',
+            searchFieldActive         : 'leftside',
+            mobileMenuOpen            : 'openmenu',
+            faClose                   : 'fa-close',
+            faBigger                  : 'bigger',
+            subOpen                   : 'sub-open',
+            hiddenMobile              : 'aikon-hidden-mobile',
+            subMenuDisabled           : 'sub-menu-disabled',
+            active                    : 'active'
+        },
+        selectors       = { // all selectors are added a prefix based on container set by options
+                            // after that, the non prefixable selectors are merged in
+            container                   : '', // this gets a value on init based on options
+            rootList                    : 'ul',
+            listItemsDeeper             : 'ul li.deeper',
+            linksWithDeeper             : 'ul li.deeper > a, ul li.deeper > span',
+            deeperLists                 : 'ul ul',
+            searchIcon                  : '.searchicon',
+            searchField                 : '.menusearch',
+            responsiveMenuTrigger       : '.respotrigger',
+            responsiveMenuTriggerIcons  : '.respotrigger .fa-bars'
+        },
+        nonPrefixableSelectors = {
+            darkenElement               : '.menu-darken'
+        },
+        throttles = {
+            animationCoolDown           : 150,
+            desktopAnimationThrottle    : null
+        },
+        debug = true;
+
+    // animation functions
+    this.standardDesktopAnimation   = function () {
+        var $aikoncms = jQuery(selectors.container);
+        jQuery(window).scroll(function () {
+            var scroll = jQuery(window).scrollTop();
+
+            if (scroll > 1) {
+                $aikoncms.removeClass(classes.desktopAnimationActive);
+            }
+            else  {
+                $aikoncms.addClass(classes.desktopAnimationActive);
+            }
+        });
+    };
+
+    this.animationDesktopBasic  = function () {
+        that.standardDesktopAnimation();
+    };
+
+    this.animationDesktopAikoncms   = function () {
+        var $aikoncms = jQuery(selectors.container),
+            originalBackground = $aikoncms.css('background-color');
+
+        // set transparent right away, must use JS ot override dynamic CSS's strong selectors
+        $aikoncms.css('background-color', 'transparent');
+
+        // set transition:
+        $aikoncms.css('transition', 'all 0.3s ease');
+
+        jQuery(window).scroll(function () {
+            var scroll = jQuery(window).scrollTop();
+
+            if (scroll > 1) {
+                $aikoncms.css('background-color', originalBackground).addClass(classes.desktopAnimationActive);
+            }
+            else  {
+                $aikoncms.css('background-color', 'transparent').removeClass(classes.desktopAnimationActive);
+            }
+        });
+    };
+
+    this.animationDesktopShrinking  = function () {
+        var initialHeight,
+            newHeight,
+            extraPadding,
+            initialPaddingTop,
+            initialPaddingBottom,
+            newPaddingTop,
+            newPaddingBottom;
+
+        // validate
+        // validate requiered animation params, set defaults if needed
+        if (!typeof options.animationParams == 'object'){
+            if (debug) {
+                console.log('animationParams is not an object, at animationDesktopShrinking');
+                return false;
+            }
+        }
+
+        if(!typeof options.animationParams.animationParamShrinkExtraSize === 'number') {
+            options.animationParams.animationParamShrinkExtraSize = '1';
+            if (debug) {
+                console.log('animationParamShrinkExtraSize is not a number, setting default, at animationDesktopShrinking');
+            }
+        }
+
+        // get values for the CSS function
+        extraPadding            = Math.ceil(options.animationParams.animationParamShrinkExtraSize / 2);
+        initialPaddingTop       = jQuery(selectors.container).css('padding-top').replace(/[^-\d\.]/g, '');
+        initialPaddingBottom    = jQuery(selectors.container).css('padding-bottom').replace(/[^-\d\.]/g, '');
+        newPaddingTop           = +initialPaddingTop + extraPadding + 'px';
+        newPaddingBottom        = +initialPaddingBottom + extraPadding + 'px';
+        initialHeight           = jQuery(selectors.container).height();
+        newHeight               = (+initialHeight + 2 * extraPadding) + 'px';
+
+        // set initial padding back to values for the css function
+        initialPaddingTop    = initialPaddingTop + 'px';
+        initialPaddingBottom = initialPaddingBottom + 'px';
+        initialHeight        = initialHeight + 'px';
+
+
+
+
+        var $aikoncms = jQuery(selectors.container);
+        jQuery(window).scroll(function () {
+            var scroll = jQuery(window).scrollTop();
+
+            if (scroll < 1) {
+                jQuery(selectors.container).css({
+                    'padding-top' : newPaddingTop,
+                    'padding-bottom' : newPaddingBottom,
+                    'height'         : newHeight
+                });
+            }
+            else  {
+                jQuery(selectors.container).css({
+                    'padding-top'    : initialPaddingTop,
+                    'padding-bottom' : initialPaddingBottom,
+                    'height'         : initialHeight
+                });
+            }
+        });
+
+        // init the menu proportion immediatly if scrolltop 0
+        //prevent transition
+        jQuery(selectors.container).addClass('aikon-menu-not-transformable');
+        if (jQuery(window).scrollTop() == 0) {
+            jQuery(selectors.container).css({
+                'padding-top'    : newPaddingTop,
+                'padding-bottom' : newPaddingBottom,
+                'height'         : newHeight
+            });
+        }
+
+        // set the class to allow transitions. this is to prevent movement when the menu needs to be resized, upon initial scroll
+        setTimeout(function () {
+            jQuery(selectors.container)
+                .removeClass('aikon-menu-not-transformable')
+                .addClass('aikon-menu-transformable');
+        }, 320);
+    };
+
+    this.animationDesktopAppearing  = function () {
+        var $appear = jQuery(selectors.container),
+            from = options.animationParams.animationParamUpscrollFrom,
+            to = options.animationParams.animationParamUpscrollTo;
+
+        jQuery(window).scroll(function () {
+            var scroll = jQuery(window).scrollTop();
+
+            if (scroll > from && scroll < to ) {
+                $appear.addClass(classes.desktopAnimationActive);
+                return;
+            } else {
+                $appear.removeClass(classes.desktopAnimationActive);
+                return;
+            }
+        });
+
+    };
+
+    this.animationDesktopUpscroll   = function () {
+        var $appear = jQuery(selectors.container),
+            lastScroll = null;
+
+        jQuery(window).scroll(function () {
+            var currentScroll = jQuery(window).scrollTop();
+            if (lastScroll !== null && currentScroll < lastScroll ) {
+                $appear.removeClass(classes.desktopAnimationActive);
+                lastScroll = currentScroll;
+                return;
+            } else {
+                $appear.addClass(classes.desktopAnimationActive);
+                lastScroll = currentScroll;
+                return;
+            }
+        });
+
+    };
+
+    this.animationDesktopAbsolute = function () {
+        // no function needed at the moment.
+    };
+
+    this.prefixSelectors = function () {
+        jQuery.each(selectors, function (index, elem) {
+            selectors[index] = options.containerPrefix + ' ' + elem;
+        });
+    };
+
+    this.bindButtonActions = function () {
+        var $mobileToggleElems;
+
+        // search button: change appearance, toggle search input visibility
+        jQuery(selectors.searchIcon).click(function(){
+            jQuery(selectors.searchField).toggleClass(classes.searchActive);
+            jQuery(selectors.searchField).toggleClass(classes.searchFieldActive);
+            jQuery(selectors.searchIcon)
+                .toggleClass(classes.faClose)
+                .toggleClass(classes.faBigger);
+        });
+
+
+        $mobileToggleElems = jQuery(selectors.responsiveMenuTrigger);
+        if (options.darkenCloseOn.indexOf(options.mobileAnimation) > -1 ) {
+            $mobileToggleElems = $mobileToggleElems.add(selectors.darkenElement);
+        }
+        // responsive menu trigger - change appearance, toggle menu visibility, toggle body class
+        $mobileToggleElems.click(function(){
+            jQuery(selectors.rootList).toggleClass(classes.mobileMenuOpen);
+            jQuery('body').toggleClass(classes.bodyMenuActive);
+            jQuery(selectors.responsiveMenuTriggerIcons).toggleClass(classes.faClose);
+        });
+    };
+
+    this.bindAnimations = function () {
+        var funcName, option;
+
+        // desktop animation - only apply for wide display
+        if (document.documentElement.clientWidth < options.mobileWidthStart) {
+            return;
+        }
+
+        funcName = 'animationDesktop';
+        option = options.desktopAnimation.charAt(0).toUpperCase() + options.desktopAnimation.slice(1);
+        funcName = funcName + option;
+        if (typeof that[funcName] === 'function'){
+            that[funcName]();
+        } else {
+            if (debug) {
+                console.log('animation function not found: ' + options.desktopAnimation);
+            }
+        }
+
+        // mobile animation
+        funcName = 'animationDesktop';
+        option = options.mobileAnimation.charAt(0).toUpperCase() + options.mobileAnimation.slice(1);
+        funcName = funcName + option;
+        if (typeof that[funcName] === 'function'){
+
+        } else {
+            if (debug) {
+                console.log('animation function not found: ' + options.mobileAnimation);
+            }
+        }
+    };
+
+    this.modifyMobileSubMenus = function () {
+        if (options.hasOwnProperty('mobileSubMenus') && options.mobileSubMenus == true) {
+            var $deeperLinks = jQuery(selectors.linksWithDeeper),
+                $deeperLists = jQuery(selectors.listItemsDeeper);
+
+            // track original activity status
+            jQuery.each($deeperLists, function (index, li) {
+                var $li = jQuery(li);
+                if ($li.hasClass(classes.active)){
+                    $li.attr('data-originally-active', '1');
+                } else{
+                    $li.attr('data-originally-active', '0');
+                }
+            });
+
+            jQuery(selectors.linksWithDeeper).click(function(e) {
+                if (jQuery(document).width() < options.mobileWidthStart) {
+                    var $li = jQuery(e.target).parents().first();
+
+                    // set active
+                    if ($li.attr('data-originally-active') != '1'){
+                        $li.toggleClass(classes.active);
+                    }
+
+                    // toggle class on sub link
+                    jQuery(e.target).siblings('ul').toggleClass(classes.subOpen);
+                    e.preventDefault();
+                }
+            });
+
+        }  else {
+            jQuery(selectors.linksWithDeeper).addClass(classes.subMenuDisabled);
+            jQuery(selectors.linksWithDeeper).siblings('ul').addClass(classes.hiddenMobile);
+        }
+    };
+
+    this.init = function (externalOptions) {
+        options = jQuery.extend(options, externalOptions);
+
+        // build selectors, prefix existing, then merge those which do not need prefixing
+        that.prefixSelectors();
+        selectors = jQuery.extend(selectors, nonPrefixableSelectors);
+
+        // bind buttons (mobile menu, search etc)
+        that.bindButtonActions();
+
+        // handle animations
+        that.bindAnimations();
+
+        // modify markup and behaviour, depends on settings for mobile sub menus
+        that.modifyMobileSubMenus();
+        return this;
+    };
+}
